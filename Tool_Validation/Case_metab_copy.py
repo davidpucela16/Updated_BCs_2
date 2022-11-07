@@ -11,8 +11,8 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Code'
-directory='/home/pdavid/Bureau/Updated_BCs/Code'
+directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
+#directory='/home/pdavid/Bureau/Updated_BCs/Code'
 os.chdir(directory)
 
 import numpy as np 
@@ -253,11 +253,11 @@ L=400
 K_eff=math.inf
 directness=20
 CMRO2_max=2*10**-5
-CMRO_range=np.linspace(5e-7, 2e-4, 10)
+CMRO_range=np.linspace(2e-4, 6e-3, 4)
 std=0.2
 #%%
 
-for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
+for mean in np.array([0.2,0.4,0.6,0.8]):
     c=0
     for CMRO2_max in CMRO_range[::-1]:
         print(c)
