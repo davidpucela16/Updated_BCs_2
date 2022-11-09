@@ -138,12 +138,12 @@ simulation=1
 # =============================================================================
 #%%
 def position_sources(dens, L, cyl_rad):
-    """dens -> density in source/square micrometer
+    """dens -> density in source/square milimeter
        L -> side length of the domain
        cyl_rad -> radius of the capillary free region
        """
     pos_s=np.zeros((0,2))
-    elem_square=1/dens
+    elem_square=1/(dens*1e-6)
     cells=np.around(L/np.sqrt(elem_square)).astype(int)   
     h=L/cells
     grid_x=np.linspace(h/2, L-h/2,cells) 
@@ -246,14 +246,37 @@ def metab_simulation(mean, std_dev, simulations, density, L,  cyl_rad, R_art, R_
         plt.show()    
     return(np.sum(avg_phi_array, axis=0)/(k+1))
 
-#%%
-
-#%%
+#%% - Da_t range defined with the values in Natalie's paper:
 alpha=20
 import math
 L=400
 K_eff=math.inf
-directness=20
+directness=20    
+
+Da_t_range=np.linspace(0,3,6)
+mean_range=np.array([0.4,0.45,0.5,0.55])
+L_char=50 #micrometers
+M_values=Da_t_range*0.4/L_char**2
+
+density_range=np.concatenate(([250],np.linspace(352,528,5)))
+std=0.2
+simulations=20
+if simulation:
+    for layer in range(len(density_range)):
+        #layer represents the cortical layer where we at
+        for Da in range(len(Da_t_range)):
+            pdb.set_trace()
+            M=M_values[Da]
+            density=density_range[layer]
+            mean=mean_range[layer]
+            a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+            np.save('../Figures_and_Tests/Case_metab/phys_vals/Da={}_dens={}_layer={}'.format(Da_t_range[Da], density, layer), a)
+            
+            
+    
+
+#%%
+
 CMRO2_max=2*10**-5
 CMRO_range=np.linspace(2e-4, 6e-3, 4)
 CMRO_range=np.linspace(5e-7, 2e-4, 10) #original
