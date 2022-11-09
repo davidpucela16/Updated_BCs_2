@@ -364,3 +364,22 @@ def FEM_to_Cartesian(FEM_x, FEM_y, FEM_phi,    x_c, y_c):
             dist=(FEM_x-x_c[j])**2+(FEM_y-y_c[i])**2
             phi_Cart[i,j]=FEM_phi[np.argmin(dist)]
     return(phi_Cart)            
+
+import os
+import csv
+
+
+def write_parameters_COMSOL(pos_s, L, alpha, K_0, M):
+    """Writes the parameter file for COMSOL"""
+    rows=[["L", L], ["alpha", alpha],["R","L/alpha"],["K_com","K_0/(2*pi*R)"],["M",M],["phi_0",0.4]]
+    
+    for i in range(len(pos_s)):
+        rows.append(["x_{}".format(i), np.around(pos_s[i,0], decimals=4)])
+        rows.append(["y_{}".format(i), np.around(pos_s[i,1], decimals=4)])
+    with open('Parameters.txt', 'w') as f:
+        writer = csv.writer(f, delimiter=' ')
+        for i in rows:
+            writer.writerow(i)
+    
+
+    
