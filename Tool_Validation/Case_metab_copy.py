@@ -263,6 +263,36 @@ CMRO_range=np.linspace(5e-7, 0.5e-2,3)
 Da_t_range=CMRO_range*(L/4)**2
 print("Damkohler range=", np.around(Da_t_range, decimals=2))
 std=0.2
+
+#%%
+
+mean=0.5
+
+if simulation:
+    for density in np.array([0.00026,0.0003,0.00034,0.00038,0.00042]):
+        c=0
+        for CMRO2_max in CMRO_range:
+        #for CMRO2_max in CMRO_range:
+            print(c)
+            print("CMRO2_max ",CMRO2_max)
+            print("mean", mean)
+            a=metab_simulation(mean, std, 20, density,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
+            np.save('../Figures_and_Tests/Case_metab/average_mean{}_density{}_Dat{}'.format(int(mean*10), density*100,Da_t_range[c]), a)
+            c+=1   
+            
+#%%
+for density in np.array([0.00026,0.0003,0.00034,0.00038,0.00042]):
+    c=0
+    for CMRO2_max in CMRO_range[::-1]:
+    #for CMRO2_max in CMRO_range:
+        print(c)
+        print("CMRO2_max ",CMRO2_max)
+        print("mean", mean)
+        b=np.load('../Figures_and_Tests/Case_metab/average_mean{}_density{}_Dat{}.npy'.format(int(mean*10), density*100,Da_t_range[c]))
+        plt.plot(b)
+        plt.title('average_mean{}_density{}_Dat{}'.format(int(mean*10), density*100,Da_t_range[c]))
+        plt.show()
+        c+=1  
 #%%
 if simulation:
     for mean in np.array([0.8,0.5,0.2]):
@@ -275,6 +305,27 @@ if simulation:
             a=metab_simulation(mean, std, 2, 0.0003,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
             np.save('../Figures_and_Tests/Case_metab/average_mean{}_std{}_Dat{}'.format(int(mean*10), int(std*10),Da_t_range[c]), a)
             c+=1   
+            
+#%% - Second tests
+CMRO_range=np.linspace(5e-7, 0.5e-2,3)
+Da_t_range=CMRO_range*(L/4)**2
+std=0.2
+for c in np.arange(len(CMRO_range)):
+    d=np.zeros((0,100))
+    for mean in np.array([0.8,0.5,0.2]):
+        CMRO2_max=CMRO_range[np.array([2,1,0])[c]]
+        b=np.load('../Figures_and_Tests/Case_metab/Second_tests/average_mean{}_std{}_Dat{}.npy'.format(int(mean*10), int(std*10),Da_t_range[c]))
+        plt.plot(b,label='mean={}'.format(mean, std))
+        plt.ylim(0,1.1)
+        d=np.concatenate((d, [b]), axis=0)
+    Damkohler=Da_t_range[np.array([2,1,0])[c]]
+    title_met='%.2E' % Damkohler
+    title='Da=' + title_met + '; std= ' + str(std)
+    plt.title(title)
+    plt.legend()
+    plt.savefig('../Figures_and_Tests/Case_metab/' + title + '.pdf')
+    plt.show()
+
 #%%
 
 CMRO_range=np.linspace(5e-7, 2e-4, 10) #original
@@ -283,13 +334,16 @@ for c in range(10):
     for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
         CMRO2_max=CMRO_range[c]
         b=np.load('../Figures_and_Tests/Case_metab/First_tests/average_mean{}_std{}_M{}.npy'.format(int(mean*10), int(std*10),c))
-        plt.plot(b,label='mean={}, std={}'.format(mean, std))
+        plt.plot(b,label='mean={}'.format(mean))
         plt.ylim(0,1.1)
         d=np.concatenate((d, [b]), axis=0)
     Damkohler=CMRO_range[len(CMRO_range)-c-1]*(L/4)**2
-    #title_met='%.2E' % Damkohler
-    plt.title('Da=' + str(Damkohler))
+    
+    title_Dam='%.2E' % Damkohler
+    title='Da=' + title_Dam + '; std= ' + str(std)
+    plt.title(title)
     plt.legend()
+    plt.savefig('../Figures_and_Tests/Case_metab/' + title + '.pdf')
     plt.show()
 #%%
 
