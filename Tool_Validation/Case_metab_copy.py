@@ -41,7 +41,7 @@ params = {'legend.fontsize': 'x-large',
          'ytick.labelsize':'x-large'}
 pylab.rcParams.update(params)
 
-
+simulation=1
 # =============================================================================
 # #0-Set up the sources
 # #1-Set up the domain
@@ -247,6 +247,8 @@ def metab_simulation(mean, std_dev, simulations, density, L,  cyl_rad, R_art, R_
     return(np.sum(avg_phi_array, axis=0)/(k+1))
 
 #%%
+
+#%%
 alpha=20
 import math
 L=400
@@ -254,40 +256,41 @@ K_eff=math.inf
 directness=20
 CMRO2_max=2*10**-5
 CMRO_range=np.linspace(2e-4, 6e-3, 4)
+CMRO_range=np.linspace(5e-7, 2e-4, 10) #original
+
+CMRO_range=np.linspace(5e-7, 0.5e-2,3)
+
+Da_t_range=CMRO_range*(L/4)**2
+print("Damkohler range=", np.around(Da_t_range, decimals=2))
 std=0.2
 #%%
-
-for mean in np.array([0.2,0.4,0.6,0.8]):
-    c=0
-    for CMRO2_max in CMRO_range[::-1]:
-        print(c)
-        a=metab_simulation(mean, std, 25, 0.0003,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
-        np.save('../Figures_and_Tests/Case_metab/average_mean{}_std{}_M{}'.format(int(mean*10), int(std*10),c), a)
-        c+=1
+if simulation:
+    for mean in np.array([0.8,0.5,0.2]):
+        c=0
+        for CMRO2_max in CMRO_range[::-1]:
+        #for CMRO2_max in CMRO_range:
+            print(c)
+            print("CMRO2_max ",CMRO2_max)
+            print("mean", mean)
+            a=metab_simulation(mean, std, 2, 0.0003,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
+            np.save('../Figures_and_Tests/Case_metab/average_mean{}_std{}_Dat{}'.format(int(mean*10), int(std*10),Da_t_range[c]), a)
+            c+=1   
 #%%
 
-for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
-    c=0
-    for CMRO2_max in CMRO_range[::-1]:
-        b=np.load('../Figures_and_Tests/Case_metab/average_mean{}_std{}_M{}.npy'.format(int(mean*10), int(std*10),c))
-        plt.plot(b)
-        title_met='%.2E' % CMRO2_max
-        plt.title('average_mean={}, std={}, M='.format(int(mean*10), int(std*10)) + title_met)
+CMRO_range=np.linspace(5e-7, 2e-4, 10) #original
+for c in range(10):
+    d=np.zeros((0,100))
+    for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
+        CMRO2_max=CMRO_range[c]
+        b=np.load('../Figures_and_Tests/Case_metab/First_tests/average_mean{}_std{}_M{}.npy'.format(int(mean*10), int(std*10),c))
+        plt.plot(b,label='mean={}, std={}'.format(mean, std))
         plt.ylim(0,1.1)
-        plt.show()
-        c+=1
-        
-#%%
-for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
-    c=0
-    CMRO2_max=np.max(CMRO_range)*2
-    b=np.load('../Figures_and_Tests/Case_metab/average_mean{}_std{}_M{}.npy'.format(int(mean*10), int(std*10),c))
-    plt.plot(b)
-    title_met='%.2E' % CMRO2_max
-    plt.title('average_mean={}, std={}, M='.format(int(mean*10), int(std*10)) + title_met)
-    plt.ylim(0,1.1)
+        d=np.concatenate((d, [b]), axis=0)
+    Damkohler=CMRO_range[len(CMRO_range)-c-1]*(L/4)**2
+    #title_met='%.2E' % Damkohler
+    plt.title('Da=' + str(Damkohler))
+    plt.legend()
     plt.show()
-    c+=1
 #%%
 
 # import the random module

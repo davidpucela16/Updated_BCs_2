@@ -446,7 +446,7 @@ class non_linear_metab(assemble_SS_2D_FD):
         Sampson integration within each cell. The matrices:
             - Upper Jacobian: [\partial_{u} I_m  \partial_{q} I_m]"""
         phi_0=self.phi_0
-        M=self.M
+        #M=self.M
         w_i=np.array([1,4,1,4,16,4,1,4,1])/36
         corr=np.array([[-1,-1,],
                        [0,-1],
@@ -486,12 +486,12 @@ class non_linear_metab(assemble_SS_2D_FD):
     def Full_Newton(self, s_linear,q_linear, rel_error,M, phi_0):
         self.M=M
         stabilization=1
-        if M>5e-4:
+        if M/self.D>5e-4:
             #For very high consumptions, we set the initial guess to zero concentration in the parenchyma
             self.assemble_it_matrices_Sampson(s_linear, q_linear)
             s_linear=-self.rec_sing
             q_linear=q_linear
-            stabilization=5*10**-4/M
+            stabilization=2*10**-4/M/self.D/2
             print("stabilization= ", stabilization)
         self.phi_0=phi_0
         rl=np.array([1])
@@ -509,8 +509,15 @@ class non_linear_metab(assemble_SS_2D_FD):
                 phi=s_field+r_field
             
             metab=self.M*(1-self.I_m)*self.h**2
-            Jacobian=np.concatenate((np.diag(self.part_Im_s_FV)+self.A_matrix, 
-                                     self.part_Im_q+self.b_matrix), axis=1)
+            metab[phi<0]=0
+            part_FV=self.part_Im_s_FV
+            part_q=self.part_Im_q
+# =============================================================================
+#             part_FV=self.part_Im_s_FV*M*self.h**2
+#             part_q=self.part_Im_q*M*self.h**2
+# =============================================================================
+            Jacobian=np.concatenate((np.diag(part_FV)+self.A_matrix, 
+                                     part_q+self.b_matrix), axis=1)
             
 
             Jacobian=np.concatenate((Jacobian, self.Down)) 
