@@ -38,7 +38,8 @@ params = {'legend.fontsize': 'x-large',
          'axes.labelsize': 'x-large',
          'axes.titlesize':'x-large',
          'xtick.labelsize':'x-large',
-         'ytick.labelsize':'x-large'}
+         'ytick.labelsize':'x-large',
+          'text.usetex' : False}
 pylab.rcParams.update(params)
 
 simulation=1
@@ -246,6 +247,12 @@ def metab_simulation(mean, std_dev, simulations, density, L,  cyl_rad, R_art, R_
         plt.show()    
     return(np.sum(avg_phi_array, axis=0)/(k+1))
 
+#%%
+def get_met_plateau(b, L,cap_free_length):
+    pos_0=np.around(len(b)*L/cap_free_length)
+    return(np.sum(b[pos_0:])/(len(b)-pos_0))
+    
+
 #%% - Da_t range defined with the values in Natalie's paper:
 alpha=20
 import math
@@ -253,27 +260,150 @@ L=400
 K_eff=math.inf
 directness=20    
 
-Da_t_range=np.linspace(0,3,6)
+Da_t_range=np.linspace(0,0.6,6)
 mean_range=np.array([0.4,0.45,0.5,0.55])
-L_char=50 #micrometers
-M_values=Da_t_range*0.4/L_char**2
+L_char=0.050 #milimeters
+solubility= 1.39e-6 #micromol/(mm3*mmHg)
+P_max=40 #mmHg
+D=4e-3 #mm2/s
 
-density_range=np.concatenate(([250],np.linspace(352,528,5)))
+Prop_Da_M=P_max*D*solubility/L_char**2
+M_values=Da_t_range*Prop_Da_M
+
+
+
+density_range=np.concatenate(([250],np.linspace(352,528,4)))
+real_density=np.concatenate(([250/440],np.linspace(0.8,1.2,4)))
 std=0.2
 simulations=20
+
+#%%
 if simulation:
+    for mean in mean_range:
+        for layer in range(len(density_range)):
+            #layer represents the cortical layer where we at
+            for Da in range(len(Da_t_range)):
+                print("layer", layer)
+                print("Da pos ", Da)
+                #M=M_values[Da]
+                M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+                density=density_range[layer]
+                #mean=mean_range[layer]
+                a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+                np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/Da={}_dens={}_layer={}'.format(Da_t_range[Da], density, layer), a)
+                
+            
+#%%
+for mean in mean_range:
     for layer in range(len(density_range)):
         #layer represents the cortical layer where we at
+        c=0
         for Da in range(len(Da_t_range)):
-            pdb.set_trace()
+            print("layer", layer)
+            print("Da pos ", Da)
             M=M_values[Da]
             density=density_range[layer]
-            mean=mean_range[layer]
-            a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
-            np.save('../Figures_and_Tests/Case_metab/phys_vals/Da={}_dens={}_layer={}'.format(Da_t_range[Da], density, layer), a)
+            #mean=mean_range[layer]
+            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/Da={}_dens={}_layer={}.npy'.format(Da_t_range[Da], density, layer))
+            plt.plot(b, label='CMRO2={}'.format(np.around(M_values[c]*2.4e3))) #The 2.4e3 is to conver it to micromol cm-3 s-1
+            c+=1  
+        plt.legend()
+        plt.title('mean{}, density{}'.format(mean, real_density[layer]))  
+        plt.show()
+        
+#%%
+for mean in mean_range:
+    for layer in range(len(density_range)):
+        #layer represents the cortical layer where we at
+        c=0
+        for Da in range(len(Da_t_range)):
+            print("layer", layer)
+            print("Da pos ", Da)
+            M=M_values[Da]
+            density=density_range[layer]
+            #mean=mean_range[layer]
+            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean/Da={}_dens={}_layer={}.npy'.format(Da_t_range[Da], density, layer))
+            plt.plot(b, label='CMRO2={}'.format(np.around(M_values[c]*2.4e3))) #The 2.4e3 is to conver it to micromol cm-3 s-1
+            c+=1  
+        plt.legend()
+        plt.title('mean{}, density{}'.format(mean, real_density[layer]))  
+        plt.show()
+
+
+
+#%%
+CMRO_range=np.linspace(0,3,5) #in micromol min-1 cm-3
+CMRO_range=CMRO_range/2.4e3 #Diff coeff and min -> s
+density=352
+if simulation:
+    for mean in np.array([0.8,0.6,0.4,0.2]):
+        c=0
+        for CMRO2_max in CMRO_range[::-1]:
+        #for CMRO2_max in CMRO_range:
+            print("CMRO2_max ",CMRO2_max)
+            print("mean", mean)
+            a=metab_simulation(mean, std, 2, density,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
+            pp=int(np.where(CMRO_range==CMRO2_max)[0])
+            np.save('../Figures_and_Tests/Case_metab/No_dens/average_mean{}_std{}_met{}'.format(int(mean*10), int(std*10),pp), a)
+            c+=1   
             
-            
-    
+#%%
+CMRO_range=np.linspace(0,3,5) #in micromol min-1 cm-3
+CMRO_range=CMRO_range/2.4e3 #Diff coeff and min -> s
+density=352
+for mean in np.array([0.8,0.6,0.4,0.2]):
+    c=0
+    for CMRO2_max in CMRO_range:
+        #for CMRO2_max in CMRO_range:
+        print(c)
+        print("CMRO2_max ",CMRO2_max)
+        print("mean", mean)
+        pp=int(np.where(CMRO_range==CMRO2_max)[0])
+        b=np.load('../Figures_and_Tests/Case_metab/No_dens/average_mean{}_std{}_met{}.npy'.format(int(mean*10), int(std*10),pp))
+        plt.plot(b, label='CMRO2={}'.format(CMRO_range[c]*2.4e3))
+        
+        c+=1  
+    plt.legend()
+    plt.title('mean{}, density{}'.format(mean, real_density[np.where(density_range==density)[0]]))  
+    plt.show()
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###### BELOW IS THE STUFF CODED BEFORE NOVEMBER 9th
+
+
 
 #%%
 
@@ -303,7 +433,7 @@ if simulation:
             np.save('../Figures_and_Tests/Case_metab/average_mean{}_density{}_Dat{}'.format(int(mean*10), density*100,Da_t_range[c]), a)
             c+=1   
             
-#%%
+#%% 
 for density in np.array([0.00026,0.0003,0.00034,0.00038,0.00042]):
     c=0
     for CMRO2_max in CMRO_range[::-1]:
@@ -316,7 +446,7 @@ for density in np.array([0.00026,0.0003,0.00034,0.00038,0.00042]):
         plt.title('average_mean{}_density{}_Dat{}'.format(int(mean*10), density*100,Da_t_range[c]))
         plt.show()
         c+=1  
-#%%
+#%% ------------------ First tests
 if simulation:
     for mean in np.array([0.8,0.5,0.2]):
         c=0
@@ -331,7 +461,7 @@ if simulation:
             
 #%% - Second tests
 CMRO_range=np.linspace(5e-7, 0.5e-2,3)
-Da_t_range=CMRO_range*(L/4)**2
+Da_t_range=np.array([0.005,25.0025,50.0])[::-1]
 std=0.2
 for c in np.arange(len(CMRO_range)):
     d=np.zeros((0,100))
@@ -343,15 +473,17 @@ for c in np.arange(len(CMRO_range)):
         d=np.concatenate((d, [b]), axis=0)
     Damkohler=Da_t_range[np.array([2,1,0])[c]]
     title_met='%.2E' % Damkohler
-    title='Da=' + title_met + '; std= ' + str(std)
+    title='M={}'.format(CMRO_range[c]*2.4e3) + '$\mu mol cm-3 min-1$; std= ' + str(std)
     plt.title(title)
     plt.legend()
     plt.savefig('../Figures_and_Tests/Case_metab/' + title + '.pdf')
     plt.show()
 
 #%%
-
+std=0.2
 CMRO_range=np.linspace(5e-7, 2e-4, 10) #original
+
+
 for c in range(10):
     d=np.zeros((0,100))
     for mean in np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8]):
@@ -360,11 +492,13 @@ for c in range(10):
         plt.plot(b,label='mean={}'.format(mean))
         plt.ylim(0,1.1)
         d=np.concatenate((d, [b]), axis=0)
-    Damkohler=CMRO_range[len(CMRO_range)-c-1]*(L/4)**2
+    Damkohler=CMRO_range[len(CMRO_range)-c-1]/Prop_Da_M
     
     title_Dam='%.2E' % Damkohler
-    title='Da=' + title_Dam + '; std= ' + str(std)
+    title='$CMRO2,max =${}'.format(np.around(CMRO_range[len(CMRO_range)-c-1]*2400, decimals=2))
     plt.title(title)
+    for xc in np.array([0.2,0.4,0.6,0.8]):
+        plt.axhline(y=xc, color='k', linestyle='--')
     plt.legend()
     plt.savefig('../Figures_and_Tests/Case_metab/' + title + '.pdf')
     plt.show()
