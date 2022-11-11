@@ -12,8 +12,13 @@ both Dirichlet and periodic BCs
 #djkflmjaze
 import os 
 directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
-#directory='/home/pdavid/Bureau/Updated_BCs/Code'
+#directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
 os.chdir(directory)
+
+mod_metab='../Tool_Validation'
+os.chdir(mod_metab)
+from Metab_testing_module import position_sources, metab_simulation, get_met_plateau
+
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -42,225 +47,36 @@ params = {'legend.fontsize': 'x-large',
           'text.usetex' : False}
 pylab.rcParams.update(params)
 
-simulation=1
-# =============================================================================
-# #0-Set up the sources
-# #1-Set up the domain
-# alpha=50
-# 
-# Da_t=10
-# D=1
-# K0=math.inf
-# L=400
-# 
-# cells=20
-# h_coarse=L/cells
-# 
-# 
-# #Metabolism Parameters
-# M=Da_t*D/L**2
-# phi_0=0.4
-# conver_residual=5e-5
-# stabilization=0.5
-# 
-# #Definition of the Cartesian Grid
-# x_coarse=np.linspace(h_coarse/2, L-h_coarse/2, int(np.around(L/h_coarse)))
-# y_coarse=x_coarse
-# 
-# #V-chapeau definition
-# directness=1
-# print("directness=", directness)
-# 
-# S=50
-# Rv=L/alpha+np.zeros(S)
-# #pos_s=(1-np.array([[0.5,0.05+1/alpha/2]]))*L
-# 
-# pos_s=np.array([[0.5,0.5]])*L
-# random.seed(1)
-# for i in range(S-1):
-#     theta=random.random()*2*np.pi
-#     r=random.random()*0.3*L+0.25*L
-#     pos_s=np.concatenate((pos_s, [np.array([np.cos(theta), np.sin(theta)])*r+L/2]),axis=0)
-# 
-# Rv[1:]/=8
-# 
-# #ratio=int(40/cells)*2
-# ratio=int(100*h_coarse//L/2)*2
-# 
-# print("h coarse:",h_coarse)
-# K_eff=K0/(np.pi*Rv**2)
-# 
-# p=np.linspace(0,1,100)
-# if np.min(p-M*(1-phi_0/(phi_0+p)))<0: print("There is an error in the metabolism")
-# 
-# 
-# C_v_array=np.ones(S) 
-# 
-# BC_value=np.array([0,0.2,0,0.2])
-# BC_type=np.array(['Periodic', 'Periodic', 'Periodic', 'Periodic'])
-# 
-# 
-# #What comparisons are we making 
-# COMSOL_reference=1
-# non_linear=1
-# Peaceman_reference=1
-# coarse_reference=1
-# directory_COMSOL='../Tool_Validation/COMSOL_output/linear'
-# directory_COMSOL_metab='../Tool_Validation/COMSOL_output/metab'
-# 
-# 
-# #%% 2 - Plot source centers and mesh
-# #Position image
-# plot_sketch(x_coarse, y_coarse, directness, h_coarse, pos_s, L, directory)
-# #%%
-# 
-# t=Testing(pos_s, Rv, cells, L,  K_eff, D, directness, ratio, C_v_array, BC_type, BC_value)
-# Multi_FV_linear, Multi_q_linear=t.Multi()
-# import pdb
-# Multi_rec_linear,_,_=t.Reconstruct_Multi(0,1)
-# 
-# plt.contourf(Multi_rec_linear, levels=100)
-# plt.title("bilinear reconstruction \n coupling model Steady State ")
-# plt.colorbar(); plt.show()
-# #%%
-# if non_linear:
-#     Multi_FV_metab, Multi_q_metab=t.Multi(M,phi_0)
-#     Multi_rec_metab,_,_=t.Reconstruct_Multi(1, 1)
-#     plt.imshow(Multi_rec_metab, origin='lower', vmax=np.max(Multi_rec_metab))
-#     plt.title("bilinear reconstruction \n coupling model Metabolism")
-#     plt.colorbar(); plt.show()
-# 
-# 
-# #%%
-# t.Linear_FV_Peaceman(0)
-# t.Metab_FV_Peaceman(M, phi_0, 0)
-#       
-# 
-# =============================================================================
-#%%
-def position_sources(dens, L, cyl_rad):
-    """dens -> density in source/square milimeter
-       L -> side length of the domain
-       cyl_rad -> radius of the capillary free region
-       """
-    pos_s=np.zeros((0,2))
-    elem_square=1/(dens*1e-6)
-    cells=np.around(L/np.sqrt(elem_square)).astype(int)   
-    h=L/cells
-    grid_x=np.linspace(h/2, L-h/2,cells) 
-    grid_y=grid_x
-    
-    center=np.array([L/2, L/2])
-    
-    for i in grid_x: 
-        for j in grid_y:
-            temp_s=(np.random.rand(1,2)-1/2)*h*0.8+np.array([[i,j]])
-            if np.linalg.norm(temp_s-center) > cyl_rad:
-                pos_s=np.concatenate((pos_s, temp_s), axis=0)
-                
-    return(pos_s)
-
-#%% - Do the analysis per angle 
-theta_arr=np.linspace(0,2*np.pi,20)
 from Reconstruction_extended_space import reconstruction_extended_space
 from random import randrange
-mean=0.7
-mu=0.1 #standard deviation
 
-density=18/240**2
-L=400
-R_art=L/30
+simulation=1
+
+
+
+#%% - Do the analysis per angle 
+
+
+L=400 #According to the experimental data
+alpha=20
+R_art=L/alpha
 R_cap=R_art/10
 K_eff=math.inf
 directness=10
-CMRO2_max=6*10**-5
-def metab_simulation(mean, std_dev, simulations, density, L,  cyl_rad, R_art, R_cap, K_eff, directness, CMRO2_max):
-    avg_phi_array=np.zeros((simulations,100))
-    for k in range(simulations):
-        
-        pos_s=np.array([[0.5,0.5]])*L
-        pos_s=np.concatenate((pos_s, position_sources(density, L, L/4)), axis=0)
-        S=len(pos_s)
-        C_v_array=np.array([1])
-        Rv=np.array([R_art])
-        for i in range(S-1):
-            C_v_array=np.append(C_v_array, random.gauss(mean,mu))
-            Rv=np.append(Rv,R_cap)
-        if np.any(pos_s>L) or np.any(pos_s<0): print("ERROR IN THE POSITIONING")
-        
-        cells=12
-        D=1
-        ratio=10
-        BC_type=np.array(['Periodic','Periodic','Periodic','Periodic'])
-        BC_value=np.zeros(4)
-        h_coarse=L/cells
-        x_coarse=np.linspace(h_coarse/2, L-h_coarse/2, int(np.around(L/h_coarse)))
-        y_coarse=x_coarse
-        phi_0=0.4
-        t=Testing(pos_s, Rv, cells, L,  K_eff, D, directness, ratio, C_v_array, BC_type, BC_value)
-
-        if CMRO2_max>10**-3:
-            t.stabilization=0.005
-        elif CMRO2_max>10**-1:
-            t.stabilization=0.02
-        else:
-            t.stabilization=2
-        print(t.stabilization)
-        
-        plot_sketch(x_coarse, y_coarse, directness, h_coarse, pos_s, L, directory)
-        C_v_array[C_v_array>1]=1
-        C_v_array[C_v_array<0]=0
-        Multi_FV_metab, Multi_q_metab=t.Multi(CMRO2_max,phi_0)
-# =============================================================================
-#         Multi_rec_metab,_,_=t.Reconstruct_Multi(1, 0)
-#         
-#         
-#         plt.imshow(Multi_rec_metab, origin='lower', vmax=np.max(Multi_rec_metab))
-#         plt.title("bilinear reconstruction \n coupling model Metabolism")
-#         plt.colorbar(); plt.show()
-# =============================================================================
-        REC_phi_array=np.zeros((0,100))
-        REC_x_array=np.zeros((0,100))
-        REC_y_array=np.zeros((0,100))
-        for i in theta_arr:
-            REC_x=np.linspace(0,L*np.cos(i)/2,100)+L/2
-            REC_y=np.linspace(0,L*np.sin(i)/2,100)+L/2
-            r=reconstruction_extended_space(pos_s, Rv, h_coarse, L,K_eff, D, directness)
-            r.s_FV=Multi_FV_metab
-            r.q=Multi_q_metab
-            r.set_up_manual_reconstruction_space(REC_x,REC_y)
-            r.full_rec(C_v_array, BC_value, BC_type)
-            REC_phi=r.s+r.SL+r.DL
-    # =============================================================================
-    #         plt.plot(REC_phi)
-    #         plt.show()
-    # =============================================================================
-            REC_x_array=np.concatenate((REC_x_array, [REC_x]), axis=0)
-            REC_y_array=np.concatenate((REC_y_array, [REC_y]), axis=0)
-            REC_phi_array=np.concatenate((REC_phi_array, [REC_phi]), axis=0)
-        
-        avg_phi_REC=np.sum(REC_phi_array, axis=0)/20
-        avg_phi_array[k]=avg_phi_REC
-        plt.plot(np.linspace(0,L/2,100),avg_phi_REC)
-        plt.xlabel('$\   m$')
-        plt.title("average of the average")
-        plt.show()    
-    return(np.sum(avg_phi_array, axis=0)/(k+1))
-
-#%%
-def get_met_plateau(b, L,cap_free_length):
-    pos_0=np.around(len(b)*L/cap_free_length)
-    return(np.sum(b[pos_0:])/(len(b)-pos_0))
     
+#%% Define crucial parameters
+L_cap=0.05 #mm
+P_max=40 #mmHg
+D = 4e-3 # mm^2 s^-1
+solubility= 1.39e-6 #micromol mm^-3 mmHg^-3
 
 #%% - Da_t range defined with the values in Natalie's paper:
-alpha=20
-import math
-L=400
-K_eff=math.inf
-directness=20    
+CMRO2_max=3 #in micromol s^-1 cm^-3 obtained from literature
 
-Da_t_range=np.linspace(0,0.6,6)
+Da_t_max=CMRO2_max/5.3376
+
+#%%    
+Da_t_range=np.linspace(0,Da_t_max,5)
 mean_range=np.array([0.4,0.45,0.5,0.55])
 L_char=0.050 #milimeters
 solubility= 1.39e-6 #micromol/(mm3*mmHg)
@@ -270,12 +86,95 @@ D=4e-3 #mm2/s
 Prop_Da_M=P_max*D*solubility/L_char**2
 M_values=Da_t_range*Prop_Da_M
 
-
+M_values_min=Da_t_range*5.3376
 
 density_range=np.concatenate(([250],np.linspace(352,528,4)))
 real_density=np.concatenate(([250/440],np.linspace(0.8,1.2,4)))
 std=0.2
-simulations=20
+simulations=2
+
+
+#%%
+mean=0.5
+for layer in range(len(density_range)):
+    #layer represents the cortical layer where we at
+    for Da in range(len(Da_t_range)):
+        print("layer", layer)
+        print("Da pos ", Da)
+        #M=M_values[Da]
+        M=Da_t_range[Da]*L_char**2/10 #therefore the units are mm-2
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        a=metab_simulation(mean, std, 2, density,L,L/4,L/alpha,3, K_eff, directness, M)
+        np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon_test/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+         
+
+#############################################################################################
+##############################################################################################
+#############################################################################################
+##############################################################################################
+#%%
+mean=mean_range[0]
+for layer in range(len(density_range)):
+    #layer represents the cortical layer where we at
+    for Da in range(len(Da_t_range)):
+        print("layer", layer)
+        print("Da pos ", Da)
+        #M=M_values[Da]
+        M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+        np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+        
+
+#%%
+mean=mean_range[1]
+for layer in range(len(density_range)):
+    #layer represents the cortical layer where we at
+    for Da in range(len(Da_t_range)):
+        print("layer", layer)
+        print("Da pos ", Da)
+        #M=M_values[Da]
+        M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+        np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+        
+#%%
+mean=mean_range[2]
+for layer in range(len(density_range)):
+    #layer represents the cortical layer where we at
+    for Da in range(len(Da_t_range)):
+        print("layer", layer)
+        print("Da pos ", Da)
+        #M=M_values[Da]
+        M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+        np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+        
+#%%
+mean=mean_range[3]
+for layer in range(len(density_range)):
+    #layer represents the cortical layer where we at
+    for Da in range(len(Da_t_range)):
+        print("layer", layer)
+        print("Da pos ", Da)
+        #M=M_values[Da]
+        M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+        np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+        
+
+#############################################################################################
+##############################################################################################
+#############################################################################################
+##############################################################################################
 
 #%%
 if simulation:
@@ -290,7 +189,7 @@ if simulation:
                 density=density_range[layer]
                 #mean=mean_range[layer]
                 a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
-                np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/Da={}_dens={}_layer={}'.format(Da_t_range[Da], density, layer), a)
+                np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
                 
             
 #%%
@@ -299,13 +198,15 @@ for mean in mean_range:
         #layer represents the cortical layer where we at
         c=0
         for Da in range(len(Da_t_range)):
+        #for Da in range(2):
             print("layer", layer)
             print("Da pos ", Da)
             M=M_values[Da]
             density=density_range[layer]
             #mean=mean_range[layer]
-            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/Da={}_dens={}_layer={}.npy'.format(Da_t_range[Da], density, layer))
-            plt.plot(b, label='CMRO2={}'.format(np.around(M_values[c]*2.4e3))) #The 2.4e3 is to conver it to micromol cm-3 s-1
+            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
+            b[b>1]=1
+            plt.plot(b, label='CMRO2={}'.format(np.around(Da_t_range[c]*5.33))) #The 2.4e3 is to conver it to micromol cm-3 s-1
             c+=1  
         plt.legend()
         plt.title('mean{}, density{}'.format(mean, real_density[layer]))  
