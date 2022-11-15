@@ -486,6 +486,7 @@ class non_linear_metab(assemble_SS_2D_FD):
     def Full_Newton(self, s_linear,q_linear, rel_error,M, phi_0):
         self.M=M
         stabilization=1
+        iterations=0
         if M/self.D>5e-4:
             #For very high consumptions, we set the initial guess to zero concentration in the parenchyma
             self.assemble_it_matrices_Sampson(s_linear, q_linear)
@@ -497,7 +498,7 @@ class non_linear_metab(assemble_SS_2D_FD):
         rl=np.array([1])
         arr_unk=np.array([np.concatenate((s_linear,q_linear))]) #This is the array where the arrays of u through iterations will be kept
         S=self.S
-        while np.abs(rl[-1])>rel_error:
+        while (np.abs(rl[-1])>rel_error and iterations<102):
             self.assemble_it_matrices_Sampson(arr_unk[-1,:-S], arr_unk[-1,-S:])
             #average phi field
             s_field=arr_unk[-1,:-S]
@@ -530,11 +531,15 @@ class non_linear_metab(assemble_SS_2D_FD):
 
             rl=np.append(rl,np.sum(np.abs(inc))/len(inc))
             print("residual", np.sum(np.abs(inc))/len(inc))
+            iterations+=1
         self.arr_unk_metab=arr_unk
         self.s_FV_metab=self.arr_unk_metab[-1,:-S]
         self.q_metab=self.arr_unk_metab[-1,-S:]
-        return(self.s_FV_metab, self.q_metab)
-
+        if iterations < 200:
+            return(self.s_FV_metab, self.q_metab)
+        else:
+            return(np.zeros(len(self.s_FV_metab)), np.zeros(len(self.q_metab)))
+        
 
 
 

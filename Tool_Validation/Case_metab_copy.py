@@ -80,7 +80,7 @@ Da_t_range=np.linspace(0,Da_t_max,5)
 mean_range=np.array([0.4,0.45,0.5,0.55])
 L_char=0.050 #milimeters
 solubility= 1.39e-6 #micromol/(mm3*mmHg)
-P_max=40 #mmHg
+P_max=40 #mmHgµ
 D=4e-3 #mm2/s
 
 Prop_Da_M=P_max*D*solubility/L_char**2
@@ -91,7 +91,7 @@ M_values_min=Da_t_range*5.3376
 density_range=np.concatenate(([250],np.linspace(352,528,4)))
 real_density=np.concatenate(([250/440],np.linspace(0.8,1.2,4)))
 std=0.2
-simulations=2
+simulations=4
 
 
 #%%
@@ -177,21 +177,11 @@ for layer in range(len(density_range)):
 ##############################################################################################
 
 #%%
-if simulation:
-    for mean in mean_range:
-        for layer in range(len(density_range)):
-            #layer represents the cortical layer where we at
-            for Da in range(len(Da_t_range)):
-                print("layer", layer)
-                print("Da pos ", Da)
-                #M=M_values[Da]
-                M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
-                density=density_range[layer]
-                #mean=mean_range[layer]
-                a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
-                np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
-                
-            
+
+    
+
+
+
 #%%
 for mean in mean_range:
     for layer in range(len(density_range)):
@@ -212,7 +202,81 @@ for mean in mean_range:
         plt.title('mean{}, density{}'.format(mean, real_density[layer]))  
         plt.show()
         
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+# 14 - Nov - 2022
 #%%
+density_range[-1]=520
+layer=4
+
+#%%
+mean=mean_range[0]
+#layer represents the cortical layer where we at
+for Da in range(len(Da_t_range)):
+    print("layer", layer)
+    print("Da pos ", Da)
+    #M=M_values[Da]
+    M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+    density=density_range[layer]
+    #mean=mean_range[layer]
+    a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+    np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+    
+#%%
+
+mean=mean_range[1]
+#layer represents the cortical layer where we at
+for Da in range(len(Da_t_range)):
+    print("layer", layer)
+    print("Da pos ", Da)
+    #M=M_values[Da]
+    M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+    density=density_range[layer]
+    #mean=mean_range[layer]
+    a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+    np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+    
+#%%
+
+mean=mean_range[2]
+#layer represents the cortical layer where we at
+for Da in range(len(Da_t_range)):
+    print("layer", layer)
+    print("Da pos ", Da)
+    #M=M_values[Da]
+    M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+    density=density_range[layer]
+    #mean=mean_range[layer]
+    a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+    np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+    
+#%%
+
+mean=mean_range[3]
+#layer represents the cortical layer where we at
+for Da in range(len(Da_t_range)):
+    print("layer", layer)
+    print("Da pos ", Da)
+    #M=M_values[Da]
+    M=Da_t_range[Da]*L_char**2 #therefore the units are mm-2
+    density=density_range[layer]
+    #mean=mean_range[layer]
+    a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M)
+    np.save('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)), a)
+    
+#%%
+    
 for mean in mean_range:
     for layer in range(len(density_range)):
         #layer represents the cortical layer where we at
@@ -232,6 +296,57 @@ for mean in mean_range:
 
 
 
+#%% - Calculate plateau
+
+plat_mat=np.zeros((len(mean_range), len(density_range), len(Da_t_range)))
+for c in range(len(mean_range)):
+    mean=mean_range[c]
+    for layer in range(len(density_range)):
+        #layer represents the cortical layer where we at
+        for Da in range(len(Da_t_range)):
+            print("layer", layer)
+            print("Da pos ", Da)
+            M=M_values[Da]
+            density=density_range[layer]
+            #mean=mean_range[layer]
+            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
+            plateau=np.sum(b[int(len(b)/2):])/int(len(b)/2)
+            plat_mat[c, layer, Da]=plateau
+    
+    
+#%%
+for layer in range(len(density_range)):
+    plt.imshow(plat_mat[:,layer,:], origin='lower', extent=(M_values_min[0], M_values_min[-1],M_values_min[0], M_values_min[-1]))
+    plt.ylabel("Capillary mean")
+    plt.xlabel("CMRO2_max")
+    plt.colorbar()
+    plt.title("Cortical layer: {}".format(layer))
+    plt.savefig('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/fig_layer{}'.format(layer))
+    plt.show()
+    
+    
+    
+    
+#%%
+    
+    
+    
+plt.imshow(plat_mat[:,-1,:]-plat_mat[:,0,:],extent=(M_values_min[0], M_values_min[-1],M_values_min[0], M_values_min[-1]))
+plt.xlabel("CMRO2_max")
+plt.colorbar()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 #%%
 CMRO_range=np.linspace(0,3,5) #in micromol min-1 cm-3
 CMRO_range=CMRO_range/2.4e3 #Diff coeff and min -> s
