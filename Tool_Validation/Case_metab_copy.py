@@ -11,8 +11,8 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
-#directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
+#directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
+directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
 os.chdir(directory)
 
 mod_metab='../Tool_Validation'
@@ -64,18 +64,17 @@ R_cap=R_art/10
 K_eff=math.inf
 directness=10
     
-#%% Define crucial parameters
+#  Define crucial parameters
 L_cap=0.05 #mm
 P_max=40 #mmHg
 D = 4e-3 # mm^2 s^-1
 solubility= 1.39e-6 #micromol mm^-3 mmHg^-3
 
-#%% - Da_t range defined with the values in Natalie's paper:
+#Da_t range defined with the values in Natalie's paper:
 CMRO2_max=3 #in micromol s^-1 cm^-3 obtained from literature
 
 Da_t_max=CMRO2_max/5.3376
 
-#%%    
 Da_t_range=np.linspace(0,Da_t_max,5)
 mean_range=np.array([0.4,0.45,0.5,0.55])
 L_char=0.050 #milimeters
@@ -324,9 +323,43 @@ for layer in range(len(density_range)):
     plt.savefig('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/fig_layer{}'.format(layer))
     plt.show()
     
+#%%
+for Da in range(len(Da_t_range)):
+    plt.imshow(plat_mat[:,:,Da], origin='lower', extent=(M_values_min[0], M_values_min[-1],M_values_min[0], M_values_min[-1]))
+    matrix=plat_mat[:,:,Da]
+    plt.ylabel("Capillary mean")
+    plt.xlabel("Density")
+    plt.colorbar()
+    plt.title("CMRO2_max={}".format(M_values_min[Da]))
+    plt.savefig('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/CMRO2_max={}'.format(int(M_values_min[Da]*100)))
+    plt.show()
     
-    
-    
+#%%
+plat_mat=np.zeros((len(mean_range), len(density_range), len(Da_t_range)))
+for layer in range(len(density_range)):
+    for c in range(len(mean_range)):
+        mean=mean_range[c]
+        #layer represents the cortical layer where we at
+        for Da in range(len(Da_t_range)):
+            print("layer", layer)
+            print("Da pos ", Da)
+            M=M_values[Da]
+            density=density_range[layer]
+            #mean=mean_range[layer]
+            
+            b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
+            b[b>1]=1
+            plt.plot(b, label="CMRO2_max={}".format(M_values_min[Da]))
+        
+        plt.legend()
+        plt.title("layer={}, mean={}".format(layer, mean))
+        plt.show()
+        
+            
+            
+            
+            
+            
 #%%
     
     
@@ -383,8 +416,26 @@ for mean in np.array([0.8,0.6,0.4,0.2]):
     plt.title('mean{}, density{}'.format(mean, real_density[np.where(density_range==density)[0]]))  
     plt.show()
 
-#%%
 
+
+
+
+#%% - November - 16th. Keep the metabolism fixed and change the density 
+
+simulations=10
+
+M_value_min=1 #micro mol / (cm^2 s)
+Damk=M_value_min/5.3376
+M_value_code=Damk*Prop_Da_M
+
+for density in CMRO_range[::-1]:
+#for CMRO2_max in CMRO_range:
+    print("CMRO2_max ",CMRO2_max)
+    print("mean", mean)
+    a=metab_simulation(mean, std, 2, density,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
+    pp=int(np.where(CMRO_range==CMRO2_max)[0])
+    np.save('../Figures_and_Tests/Case_metab/No_dens/average_mean{}_std{}_met{}'.format(int(mean*10), int(std*10),pp), a)
+    c+=1  
 
 
 
