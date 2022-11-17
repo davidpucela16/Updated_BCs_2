@@ -11,8 +11,8 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-#directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
-directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
+directory='/home/pdavid/Bureau/Code/Updated_BCs_2/Code'
+#directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
 os.chdir(directory)
 
 mod_metab='../Tool_Validation'
@@ -202,9 +202,21 @@ for mean in mean_range:
         plt.show()
         
 
-    
-    
-    
+#%% - Try fix metab 16th Nov
+c=0
+for Da in range(len(Da_t_range)):
+    for layer in range(len(density_range)):
+        #layer represents the cortical layer where we at
+        if layer>0: mean=mean_range[layer-1]
+        if layer==0: mean=mean_range[0]
+        #mean=mean_range[layer]
+        b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
+        b[b>1]=1
+        plt.plot(b, label='layer= {}'.format(layer)) #The 2.4e3 is to conver it to micromol cm-3 s-1
+    plt.legend()
+    plt.title('CMRO2_max= {}'.format(np.around(Da_t_range[c]*5.33, decimals=1)))  
+    plt.show()
+    c+=1
     
     
     
@@ -336,11 +348,12 @@ for Da in range(len(Da_t_range)):
     
 #%%
 plat_mat=np.zeros((len(mean_range), len(density_range), len(Da_t_range)))
-for layer in range(len(density_range)):
+
+for Da in range(len(Da_t_range)):
     for c in range(len(mean_range)):
         mean=mean_range[c]
         #layer represents the cortical layer where we at
-        for Da in range(len(Da_t_range)):
+        for layer in range(len(density_range)):
             print("layer", layer)
             print("Da pos ", Da)
             M=M_values[Da]
@@ -349,15 +362,34 @@ for layer in range(len(density_range)):
             
             b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
             b[b>1]=1
-            plt.plot(b, label="CMRO2_max={}".format(M_values_min[Da]))
+            plt.plot(b, label="layer={}".format(layer))
         
         plt.legend()
-        plt.title("layer={}, mean={}".format(layer, mean))
+        plt.title("CMRO={}, mean={}".format(np.around(Da_t_range[Da]*5.33, decimals=2), mean))
         plt.show()
         
+
+#%%
             
-            
-            
+pp=np.arange(1,5)
+for Da in range(len(Da_t_range)):
+    for c in range(len(mean_range)):
+        mean=mean_range[c]
+        #layer represents the cortical layer where we at
+        layer=c+1
+        print("layer", layer)
+        print("Da pos ", Da)
+        M=M_values[Da]
+        density=density_range[layer]
+        #mean=mean_range[layer]
+        
+        b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
+        b[b>1]=1
+        plt.plot(b, label="layer={}".format(layer))
+
+    plt.legend()
+    plt.title("CMRO={}, mean={}".format(np.around(Da_t_range[Da]*5.33, decimals=2), mean))
+    plt.show()
             
             
 #%%
@@ -422,50 +454,104 @@ for mean in np.array([0.8,0.6,0.4,0.2]):
 
 #%% - November - 16th. Keep the metabolism fixed and change the density 
 
+
+
 simulations=10
 
-M_value_min=1 #micro mol / (cm^2 s)
+M_value_min=1.5 #micro mol / (cm^2 s)
+#So far I have tested M_value = [1 , 1.5, 2, 3]
 Damk=M_value_min/5.3376
 M_value_code=Damk*Prop_Da_M
 
-for density in CMRO_range[::-1]:
-#for CMRO2_max in CMRO_range:
-    print("CMRO2_max ",CMRO2_max)
-    print("mean", mean)
-    a=metab_simulation(mean, std, 2, density,L,L/4,L/alpha,3, K_eff, directness, CMRO2_max)
-    pp=int(np.where(CMRO_range==CMRO2_max)[0])
-    np.save('../Figures_and_Tests/Case_metab/No_dens/average_mean{}_std{}_met{}'.format(int(mean*10), int(std*10),pp), a)
-    c+=1  
+
+
+for Da in range(len(Da_t_range)):
+    for d in range(len(density_range)):
+        density=density_range[d]
+        if d>0: mean=mean_range[d-1]
+        if d==0: mean=mean_range[0]
+        
+        mean=0.4
+        #for CMRO2_max in CMRO_range:
+        a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M_value_code)
+        np.save('../Figures_and_Tests/Case_metab/Fixed_metab/average_mean{}_density{}_Da{}'.format(int(mean*10), int(density),int(Damk*100)), a)
+
+#%%
+for M_value_min in np.array([0.7,1.5,2,3]):
+#for M_value_min in np.array([3]):
+    Damk=M_value_min/5.3376
+    for d in range(len(density_range)-1):
+        d+=1
+        density=density_range[d]
+        if d>0: 
+            mean=mean_range[d-1]
+            lab='Layer {}'.format(d)
+        if d==0: 
+            mean=mean_range[0]
+            lab='Pathological'
+        
+        #mean=0.4
+        
+        b=np.load('../Figures_and_Tests/Case_metab/Fixed_metab/average_mean{}_density{}_Da{}.npy'.format(int(mean*10), int(density),int(Damk*100)))
+        b[b>1]=1
+        plt.plot(b, label=lab)
+        first="$CMRO_{2,max}$"
+        tit=first + "= {}".format( M_value_min)
+        plt.title(tit + "$\dfrac{\mu mol}{cm^2 \cdot s}$")
+    plt.xlabel("$\mu m$")
+    plt.ylabel("$\dfrac{P_{O_2}}{P_{O_2}^{art}}$         ", rotation=0)
+    plt.legend()
+    plt.show()
 
 
 
 
+#%%
+simulations=10
+
+M_values=np.array([0,0.75,1.5,2.25,3,4])
+
+#So far I have tested M_value = [1 , 1.5, 2, 3]
+Damk=M_values/5.3376
 
 
 
 
+for Da in range(len(Damk)):
+    for mean in mean_range:
+        for d in range(len(density_range)):
+            density=density_range[d]
+            M_value_code=Damk[Da]*Prop_Da_M
+            #for CMRO2_max in CMRO_range:
+            a=metab_simulation(mean, std, simulations, density,L,L/4,L/alpha,3, K_eff, directness, M_value_code)
+            np.save('../Figures_and_Tests/Case_metab/Tests_16_Nov/average_mean{}_density{}_Da{}'.format(int(mean*10), int(density),int(Damk[Da]*100)), a)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#%%
+for M_value_min in M_values:
+#for M_value_min in np.array([3]):
+    Damk=M_value_min/5.3376
+    for d in range(len(density_range)-1):
+        d+=1
+        density=density_range[d]
+        if d>0: 
+            mean=mean_range[d-1]
+            lab='Layer {}'.format(d)
+        if d==0: 
+            mean=mean_range[0]
+            lab='Pathological'
+        
+        #mean=0.4
+        
+        b=np.load('../Figures_and_Tests/Case_metab/Fixed_metab/average_mean{}_density{}_Da{}.npy'.format(int(mean*10), int(density),int(Damk*100)))
+        b[b>1]=1
+        plt.plot(b, label=lab)
+        first="$CMRO_{2,max}$"
+        tit=first + "= {}".format( M_value_min)
+        plt.title(tit + "$\dfrac{\mu mol}{cm^2 \cdot s}$")
+    plt.xlabel("$\mu m$")
+    plt.ylabel("$\dfrac{P_{O_2}}{P_{O_2}^{art}}$         ", rotation=0)
+    plt.legend()
+    plt.show()
 
 
 ###### BELOW IS THE STUFF CODED BEFORE NOVEMBER 9th
