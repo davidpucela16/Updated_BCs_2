@@ -195,10 +195,14 @@ for mean in mean_range:
             #mean=mean_range[layer]
             b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
             b[b>1]=1
-            plt.plot(b, label='CMRO2={}'.format(np.around(Da_t_range[c]*5.33))) #The 2.4e3 is to conver it to micromol cm-3 s-1
+            lab="$CMRO_{2,max}$"
+            plt.plot(b, label=lab+'={}'.format(np.around(Da_t_range[c]*5.33*2, decimals=1))) #The 2.4e3 is to conver it to micromol cm-3 s-1
             c+=1  
         plt.legend()
-        plt.title('mean{}, density{}'.format(mean, real_density[layer]))  
+        tit="$\dfrac{P_{O_2}^{cap}}{P_{O_2}^{art}}$"
+        plt.title(tit + '= {}, Layer={}'.format(np.around(mean, decimals=2), layer))  
+        plt.ylabel("$\dfrac{P_{O_2}}{P_{O_2}^{art}}$        ", rotation=0)
+        plt.xlabel('$\mu m$')
         plt.show()
         
 
@@ -210,11 +214,16 @@ for Da in range(len(Da_t_range)):
         if layer>0: mean=mean_range[layer-1]
         if layer==0: mean=mean_range[0]
         #mean=mean_range[layer]
+        #mean=0.5
         b=np.load('../Figures_and_Tests/Case_metab/phys_vals_mean_bon/mean={}_Da={}_layer={}.npy'.format(int(mean*100),int(Da_t_range[Da]*100), int(layer)))
         b[b>1]=1
-        plt.plot(b, label='layer= {}'.format(layer)) #The 2.4e3 is to conver it to micromol cm-3 s-1
+        
+        plt.plot(b, label='layer= {}'.format(layer+1)) #The 2.4e3 is to conver it to micromol cm-3 s-1
     plt.legend()
-    plt.title('CMRO2_max= {}'.format(np.around(Da_t_range[c]*5.33, decimals=1)))  
+    lab="$CMRO_{2,max}$"
+    plt.title(lab+'={}'.format(np.around(Da_t_range[c]*5.337, decimals=1)) + ' $\dfrac{\mu mol }{cm^2 s}$')
+    plt.ylabel("$\dfrac{P_{O_2}}{P_{O_2}^{art}}$        ", rotation=0)
+    plt.xlabel('$\mu m$')
     plt.show()
     c+=1
     
@@ -509,7 +518,7 @@ for M_value_min in np.array([0.7,1.5,2,3]):
 #%%
 simulations=10
 
-M_values=np.array([0,0.75,1.5,2.25,3,4])
+M_values=np.array([0,0.5,0.75,1.5,2.25,3,4])
 
 #So far I have tested M_value = [1 , 1.5, 2, 3]
 Damk=M_values/5.3376
