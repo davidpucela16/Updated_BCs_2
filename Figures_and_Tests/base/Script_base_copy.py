@@ -11,11 +11,11 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Code'
-directory='/home/pdavid/Bureau/Updated_BCs/Code'
+directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs_2/Code'
+directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
 os.chdir(directory)
-directory_script='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Figures_and_Tests/base'
-directory_script='/home/pdavid/Bureau/Updated_BCs/Figures_and_Tests/base'
+directory_script='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs_2/Figures_and_Tests/base'
+directory_script='/home/pdavid/Bureau/Updated_BCs_2/Figures_and_Tests/base'
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -47,7 +47,7 @@ pylab.rcParams.update(params)
 #1-Set up the domain
 alpha=50
 
-Da_t=10
+Da_t=1
 D=1
 K0=1
 L=240
@@ -56,9 +56,10 @@ cells=5
 h_coarse=L/cells
 
 
+
 #Metabolism Parameters
 M=Da_t*D/L**2
-M=6*10**-2
+M=6*10**-4
 phi_0=0.4
 conver_residual=5e-5
 stabilization=0.5
@@ -76,7 +77,8 @@ Rv=L/alpha+np.zeros(S)
 pos_s=np.array([[0.5,0.5]])*L
 
 #ratio=int(40/cells)*2
-ratio=int(100*h_coarse//L)
+ratio=int(100*h_coarse//L/2)
+
 
 print("h coarse:",h_coarse)
 K_eff=K0/(np.pi*Rv**2)
@@ -150,3 +152,37 @@ if non_linear:
     plt.legend()
     plt.title("Metabolism")
     plt.show()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+#%%
+a,_,_=t.Reconstruct_Multi(0,0)
+x_c=np.zeros((cells*t.ratio)**2)
+y_c=x_c.copy()
+
+for i in range(cells*t.ratio):
+    x_c[i*cells*ratio:(i+1)*cells*ratio]=t.x_fine
+    y_c[i*cells*ratio:(i+1)*cells*ratio]=t.y_fine[i]
+#%%
+toreturn=np.array([np.around(x_c, decimals=2), np.around(y_c, decimals=2),np.around(np.ndarray.flatten(a), decimals=2)]).T
+
+import pandas as pd
+
+b=pd.DataFrame(toreturn)
+b.columns=["x", "y", "phi"]
+
+b.to_csv(directory_script + '/try.csv', sep=',', index=None)
+

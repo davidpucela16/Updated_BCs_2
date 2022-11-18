@@ -34,7 +34,7 @@ import scipy as sp
 from scipy import sparse
 import scipy.sparse.linalg
 import matplotlib.pylab as pylab
-import pandas
+import pandas as pd
 params = {'legend.fontsize': 'x-large',
           'figure.figsize': (12,12),
          'axes.labelsize': 'x-large',
@@ -114,11 +114,7 @@ coarse_reference=1
 directory_COMSOL='../Figures_and_Tests/Multiple_sources/COMSOL_output/linear'
 directory_COMSOL_metab='../Figures_and_Tests/Multiple_sources/COMSOL_output/metab'
 
-
 #%%
-
-#%%
-
 
 range_cells=np.array([5,7,10,15,20,30])
 
@@ -133,7 +129,7 @@ for cells in range_cells:
     x_coarse=np.linspace(h_coarse/2, L-h_coarse/2, int(np.around(L/h_coarse)))
     y_coarse=x_coarse
     
-    directness=int(cells/2)
+    directness=60
     
     plot_sketch(x_coarse, y_coarse, directness, h_coarse, pos_s, L, directory_script)
     t=Testing(pos_s, Rv, cells, L,  K_eff, D, directness, ratio, C_v_array, BC_type, BC_value)
@@ -219,3 +215,9 @@ plt.show()
 plt.plot(np.abs(q_metab-Multi_q_metab)/np.abs(q_metab), label="relative error")
 plt.plot(np.abs(q_metab-Multi_q_metab), label="abs error")
 plt.show()
+
+
+
+#%%
+
+

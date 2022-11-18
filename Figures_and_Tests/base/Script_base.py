@@ -11,11 +11,11 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Code'
-directory='/home/pdavid/Bureau/Updated_BCs/Code'
+directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs_2/Code'
+directory='/home/pdavid/Bureau/Updated_BCs_2/Code'
 os.chdir(directory)
-directory_script='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Figures_and_Tests/base'
-directory_script='/home/pdavid/Bureau/Updated_BCs/Figures_and_Tests/base'
+directory_script='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs_2/Figures_and_Tests/base'
+directory_script='/home/pdavid/Bureau/Updated_BCs_2/Figures_and_Tests/base'
 
 import numpy as np 
 import matplotlib.pyplot as plt
