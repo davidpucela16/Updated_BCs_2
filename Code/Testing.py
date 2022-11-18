@@ -357,7 +357,7 @@ def extract_COMSOL_data(directory_COMSOL, args):
     
     return(toreturn)
 
-def FEM_to_Cartesian(FEM_x, FEM_y, FEM_phi,    x_c, y_c):
+def FEM_to_Cartesian(FEM_x, FEM_y, FEM_phi, x_c, y_c):
     phi_Cart=np.zeros((len(y_c), len(x_c)))
     for i in range(len(y_c)):
         for j in range(len(x_c)):
