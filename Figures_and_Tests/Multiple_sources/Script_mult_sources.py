@@ -11,11 +11,11 @@ both Dirichlet and periodic BCs
 """
 #djkflmjaze
 import os 
-directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Code'
-directory='/home/pdavid/Bureau/SS/2D_cartesian/Updated_BCs/Code' #Malpighi
+#directory='/home/pdavid/Bureau/Code/SS_auto57/2D_cartesian/Updated_BCs/Code'
+directory='/home/pdavid/Bureau/Updated_BCs_2/Code' #Malpighi
 os.chdir(directory)
 
-directory_script='/home/pdavid/Bureau/SS/2D_cartesian/Updated_BCs/Figures_and_Tests/Multiple_sources'
+directory_script='/home/pdavid/Bureau/Updated_BCs_2/Figures_and_Tests/Multiple_sources'
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -25,7 +25,8 @@ from Module_Coupling import assemble_SS_2D_FD, non_linear_metab
 from reconst_and_test_module import reconstruction_sans_flux
 from Small_functions import coord_to_pos,pos_to_coords,get_MAE, get_MRE, get_position_cartesian_sources, plot_sketch
 from Reconstruction_extended_space import reconstruction_extended_space
-from Testing import Testing, extract_COMSOL_data
+from Testing import Testing, extract_COMSOL_data, FEM_to_Cartesian
+from Reconstruction_functions import coarse_cell_center_rec
 
 import pdb
 import random 
@@ -52,7 +53,7 @@ D=1
 K0=1
 L=240
 
-cells=10
+cells=5
 h_coarse=L/cells
 
 
@@ -67,7 +68,7 @@ x_coarse=np.linspace(h_coarse/2, L-h_coarse/2, int(np.around(L/h_coarse)))
 y_coarse=x_coarse
 
 #V-chapeau definition
-directness=4
+directness=9
 print("directness=", directness)
 
 
@@ -82,8 +83,8 @@ pos_s3[:,1]-=0.03
 
 pos_s=(pos_s3*0.8+0.1)*L
 
-pos_s[8,0]=127
-pos_s[9,0]=140
+#pos_s[8,0]=127
+#pos_s[9,0]=140
 
 S=len(pos_s)
 Rv=L/alpha+np.zeros(S)
@@ -115,45 +116,79 @@ directory_COMSOL_metab='../Figures_and_Tests/Multiple_sources/COMSOL_output/meta
 
 #%%
 plot_sketch(x_coarse, y_coarse, directness, h_coarse, pos_s, L, directory_script)
-#%%
-
-#%%
-q_linear, FEM_phi_linear, FEM_x_linear, FEM_y_linear = extract_COMSOL_data(directory_COMSOL, [1,0,0])
-
-
-#%%
-
+#%% - LINEAR PROBLEM
 t=Testing(pos_s, Rv, cells, L,  K_eff, D, directness, ratio, C_v_array, BC_type, BC_value)
 
 Multi_FV_linear, Multi_q_linear=t.Multi()
-Multi_rec_linear,_,_=t.Reconstruct_Multi(0,0, FEM_x_linear, FEM_y_linear)
-
-
-#%%
-diff=Multi_rec_linear-FEM_phi_linear
-
-plt.tricontourf(FEM_x_linear, FEM_y_linear,diff, levels=100)
-plt.colorbar()
-plt.title('error')
+if non_linear: Multi_FV_metab, Multi_q_metab=t.Multi(M,phi_0)
 
 #%%
-plt.plot(q_linear)
-plt.plot(Multi_q_linear)
+if COMSOL_reference:
+    q_linear, FEM_phi_linear, FEM_x_linear, FEM_y_linear = extract_COMSOL_data(directory_COMSOL, [1,1,0])
+    Multi_rec_linear,_,_=t.Reconstruct_Multi(0,0, FEM_x_linear/1e6, FEM_y_linear/1e6)
+    
+    fig, axs=plt.subplots(2,2)
+    im1=axs[0,0].tricontourf(FEM_x_linear, FEM_y_linear,Multi_rec_linear, levels=100)
+    axs[0,0].set_title("Reconstruction of the Multi model - Linear")
+    plt.colorbar(im1, ax=axs[0,0])
+    
+    diff=Multi_rec_linear-FEM_phi_linear
 
+    im2=axs[0,1].tricontourf(FEM_x_linear, FEM_y_linear,diff, levels=100)
+    axs[0,1].set_title('Absolute $\phi$-error - Linear')
+    plt.colorbar(im2,ax=axs[0,1])
+    
+    axs[1,0].plot(q_linear, label='COMSOL')
+    axs[1,0].plot(Multi_q_linear, label='Multi')
+    axs[1,0].legend()
+    
+    
+    Multi_Cart_phi=coarse_cell_center_rec(x_coarse, y_coarse, t.Multi_FV_linear, pos_s, t.s_blocks, t.Multi_q_linear, directness, Rv)
+    FEM_Cart_phi=FEM_to_Cartesian(FEM_x_linear/1e6, FEM_y_linear/1e6, FEM_phi_linear, x_coarse, y_coarse)
+    
+    axs[1,1].plot(np.abs(q_linear-Multi_q_linear)/np.abs(q_linear), label="relative error")
+    axs[1,1].plot(np.abs(q_linear-Multi_q_linear), label="abs error")
+    axs[1,1].legend()
+    
+    plt.show()
+    
+    print("MRE in flux estimation= ", get_MRE(q_linear, Multi_q_linear))
+    print("MRE in $phi$ - field= ", get_MRE(FEM_Cart_phi, Multi_Cart_phi))
+    
+    
+    if non_linear:
+        
+        q_metab, FEM_phi_metab, FEM_x_metab, FEM_y_metab = extract_COMSOL_data(directory_COMSOL_metab, [1,1,0])
+        Multi_rec_metab,_,_=t.Reconstruct_Multi(1,0, FEM_x_linear/1e6, FEM_y_linear/1e6)
+        fig, axs=plt.subplots(2,2)
+        im1=axs[0,0].tricontourf(FEM_x_metab, FEM_y_metab,Multi_rec_metab, levels=100)
+        axs[0,0].set_title("Reconstruction of the Multi model - metab")
+        plt.colorbar(im1, ax=axs[0,0])
+        
+        diff=Multi_rec_metab-FEM_phi_metab
+    
+        im2=axs[0,1].tricontourf(FEM_x_metab, FEM_y_metab,diff, levels=100)
+        axs[0,1].set_title('Absolute $\phi$-error - metab')
+        plt.colorbar(im2,ax=axs[0,1])
+        
+        axs[1,0].plot(q_metab, label='COMSOL')
+        axs[1,0].plot(Multi_q_metab, label='Multi')
+        axs[1,0].legend()
+        
+        
+        Multi_Cart_phi=coarse_cell_center_rec(x_coarse, y_coarse, t.Multi_FV_metab, pos_s, t.s_blocks, t.Multi_q_metab, directness, Rv)
+        FEM_Cart_phi=FEM_to_Cartesian(FEM_x_metab/1e6, FEM_y_metab/1e6, FEM_phi_metab, x_coarse, y_coarse)
+        
+        axs[1,1].plot(np.abs(q_metab-Multi_q_metab)/np.abs(q_metab), label="relative error")
+        axs[1,1].plot(np.abs(q_metab-Multi_q_metab), label="abs error")
+        axs[1,1].legend()
+        
+        plt.show()
+        
+        print("MRE in flux estimation= ", get_MRE(q_metab, Multi_q_metab))
+        print("MRE in $phi$ - field= ", get_MRE(FEM_Cart_phi, Multi_Cart_phi))
+    
 
-#%%
-
-plt.plot(np.abs(q_linear-Multi_q_linear)/np.abs(q_linear))
-plt.title("relative error")
-
-plt.plot(np.abs(q_linear-Multi_q_linear))
-plt.title("abs error")
-
-#%%
-Multi_FV_metab, Multi_q_metab=t.Multi(M,phi_0)
-
-
-q_metab = extract_COMSOL_data(directory_COMSOL_metab, [1,0,0])
 
 #%%
 q_metab=np.squeeze(np.array(q_metab))
@@ -161,9 +196,6 @@ plt.plot(q_metab)
 plt.plot(Multi_q_metab)
 plt.show()
 
-plt.plot(np.abs(q_metab-Multi_q_metab)/np.abs(q_metab))
-plt.title("relative error")
-plt.show()
-plt.plot(np.abs(q_metab-Multi_q_metab))
-plt.title("abs error")
+plt.plot(np.abs(q_metab-Multi_q_metab)/np.abs(q_metab), label="relative error")
+plt.plot(np.abs(q_metab-Multi_q_metab), label="abs error")
 plt.show()
